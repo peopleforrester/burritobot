@@ -16,7 +16,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/REPLACE_WITH_OWNER/burritbot-kubecon-2026.git
+    repoURL: https://github.com/REPLACE_WITH_OWNER/burritbot.git
     targetRevision: main
     path: deploy/ai-gateway
     directory:
