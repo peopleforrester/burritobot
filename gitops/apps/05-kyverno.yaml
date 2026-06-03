@@ -1,5 +1,5 @@
-# ABOUTME: Wave -5: Kyverno admission controller must be alive before policies or workloads.
-# ABOUTME: Policies themselves ship in wave 0 as part of the security app.
+# ABOUTME: Wave -5: Kyverno admission controller; chart values adapted from kubeauto-ai-day.
+# ABOUTME: Webhook exclusions guard against system-namespace deadlocks; per-controller limits set.
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -21,6 +21,54 @@ spec:
     targetRevision: 3.7.1
     helm:
       releaseName: kyverno
+      valuesObject:
+        # Exclude system namespaces from the admission webhook to avoid
+        # the webhook depending on workloads it would itself be admitting.
+        # Kyverno's own namespace is excluded by default
+        # (excludeKyvernoNamespace: true on the chart).
+        config:
+          webhooks:
+            namespaceSelector:
+              matchExpressions:
+                - key: kubernetes.io/metadata.name
+                  operator: NotIn
+                  values:
+                    - kube-system
+                    - kube-public
+                    - kube-node-lease
+        admissionController:
+          replicas: 1
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+        backgroundController:
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+        cleanupController:
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+        reportsController:
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
   destination:
     server: https://kubernetes.default.svc
     namespace: security
