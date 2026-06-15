@@ -14,6 +14,16 @@ terraform {
       version = "~> 7.0"
     }
   }
+
+  # Remote state in GCS — object versioning + state locking are mandatory
+  # before any `terraform apply`. The bucket itself is created by the
+  # operator out-of-band (see backend.tf.example) so it can carry its own
+  # lifecycle protection and survive a Terraform-managed teardown of the
+  # rest of the project.
+  backend "gcs" {
+    bucket = "REPLACE_WITH_TFSTATE_BUCKET"
+    prefix = "burritbot/terraform/state"
+  }
 }
 
 provider "google" {

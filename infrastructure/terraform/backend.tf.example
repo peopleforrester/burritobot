@@ -1,0 +1,47 @@
+# ABOUTME: Operator playbook for bootstrapping the GCS bucket that hosts Terraform state.
+# ABOUTME: Run these commands ONCE per GCP project before the first `terraform init`.
+#
+# Why this exists:
+#   Terraform cannot create the bucket that holds its own state — chicken-and-egg.
+#   This file documents the gcloud commands an operator runs out-of-band to
+#   create the state bucket with object versioning, uniform access, and a
+#   prevent-accidental-deletion safeguard. The bucket name then replaces
+#   REPLACE_WITH_TFSTATE_BUCKET in main.tf's backend block (or pass it via
+#   `terraform init -backend-config=bucket=<name>`).
+#
+# Replace these literals for your environment:
+#   PROJECT_ID       — your GCP project (e.g. burritbot-kubecon-2026)
+#   STATE_BUCKET     — must be globally unique (e.g. ${PROJECT_ID}-tfstate)
+#   REGION           — same region the rest of the platform uses (us-west1 for burritbot)
+#
+# -----------------------------------------------------------------------------
+#   PROJECT_ID="REPLACE_WITH_PROJECT"
+#   STATE_BUCKET="${PROJECT_ID}-tfstate"
+#   REGION="us-west1"
+#
+#   # 1. Create the bucket (uniform bucket-level access).
+#   gcloud storage buckets create "gs://${STATE_BUCKET}" \
+#     --project="${PROJECT_ID}" \
+#     --location="${REGION}" \
+#     --uniform-bucket-level-access
+#
+#   # 2. Enable object versioning so a wrong `terraform apply` is recoverable.
+#   gcloud storage buckets update "gs://${STATE_BUCKET}" --versioning
+#
+#   # 3. Grant the human operator (or CI service account) state-bucket access.
+#   #    For a single-operator demo, your gcloud-authenticated identity works.
+#   #    For CI, use a WIF-bound service account and grant roles/storage.objectAdmin
+#   #    on this bucket only (not project-wide).
+#   gcloud storage buckets add-iam-policy-binding "gs://${STATE_BUCKET}" \
+#     --member="user:$(gcloud config get-value account)" \
+#     --role="roles/storage.objectAdmin"
+#
+#   # 4. Initialise Terraform with the new backend.
+#   cd infrastructure/terraform
+#   sed -i "s/REPLACE_WITH_TFSTATE_BUCKET/${STATE_BUCKET}/" main.tf
+#   terraform init
+# -----------------------------------------------------------------------------
+#
+# Once `terraform init` succeeds, commit the updated main.tf (or, better, set
+# the bucket name via `-backend-config` so the literal placeholder stays in
+# the repo and each operator points at their own bucket).
