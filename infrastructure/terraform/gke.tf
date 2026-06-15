@@ -60,6 +60,29 @@ resource "google_container_cluster" "burritbot" {
     channel = "REGULAR"
   }
 
+  # Private nodes: workers get no public IPs (egress via Cloud NAT in vpc.tf).
+  # enable_private_endpoint = false leaves the control-plane API reachable
+  # from the operator's allow-listed CIDRs via master_authorized_networks
+  # below. Flipping to true would lock the control plane to the VPC only.
+  private_cluster_config {
+    enable_private_nodes    = true
+    enable_private_endpoint = false
+    master_ipv4_cidr_block  = var.master_ipv4_cidr_block
+  }
+
+  # Restrict who can hit the control plane API. Default keeps it closed
+  # to literally nothing; operator overrides via terraform.tfvars before
+  # the first apply.
+  master_authorized_networks_config {
+    dynamic "cidr_blocks" {
+      for_each = var.master_authorized_cidrs
+      content {
+        cidr_block   = cidr_blocks.value.cidr_block
+        display_name = cidr_blocks.value.display_name
+      }
+    }
+  }
+
   # Initial node pool is removed — NAP provisions the real pools. GKE
   # requires a default pool exist at creation, so we create a minimal one
   # and then remove it in a follow-up.

@@ -65,3 +65,18 @@ variable "vertex_secret_id" {
   type        = string
   default     = "burritbot-vertex-ai"
 }
+
+variable "master_ipv4_cidr_block" {
+  description = "Private /28 used for the GKE control plane peering range."
+  type        = string
+  default     = "172.16.0.0/28"
+}
+
+variable "master_authorized_cidrs" {
+  description = "CIDR blocks allowed to reach the GKE control plane API."
+  type = list(object({
+    cidr_block   = string
+    display_name = string
+  }))
+  default = []
+}
