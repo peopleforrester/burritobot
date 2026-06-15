@@ -1,0 +1,107 @@
+# ABOUTME: ConfigMap wrapping LLM Guard config.yaml; mounted at /config/config.yaml.
+# ABOUTME: Consumed by the llm-guard Deployment via volume mount + LLM_GUARD_CONFIG env var.
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: llm-guard-config
+  namespace: burritbot-net
+  labels:
+    app.kubernetes.io/name: llm-guard
+    app.kubernetes.io/part-of: burritbot
+    burritbot.io/layer: the-net
+data:
+  config.yaml: |
+    # ABOUTME: LLM Guard 0.3.17+ scanner config — both input and output scanners are populated.
+    # ABOUTME: Loaded by the llm-guard container in the burritbot-net gateway pod.
+    ---
+    app:
+      name: burritbot-llm-guard
+      namespace: burritbot-net
+      log_level: INFO
+
+    cache:
+      # Redis is optional in the demo; in-memory is fine at rehearsal scale.
+      type: memory
+      ttl_seconds: 300
+
+    input_scanners:
+      - type: PromptInjection
+        enabled: true
+        threshold: 0.85
+        model: ProtectAI/deberta-v3-base-prompt-injection-v2
+      - type: TokenLimit
+        enabled: true
+        max_tokens: 1024
+        encoding: cl100k_base
+      - type: BanTopics
+        # Act 1 of the demo invites audience members to submit lighthearted
+        # off-topic prompts (dance moves, party planning, karaoke). BanTopics
+        # is the second line of defense behind the burrito-only Colang rail —
+        # it catches paraphrases the rail misses with zero-shot classification.
+        enabled: true
+        threshold: 0.6
+        topics:
+          - dancing
+          - parties
+          - karaoke
+          - coding
+          - politics
+          - medical advice
+          - legal advice
+          - financial advice
+      - type: BanSubstrings
+        enabled: true
+        match_type: word
+        case_sensitive: false
+        substrings:
+          - "ignore previous"
+          - "system prompt"
+          - "jailbreak"
+          - "developer mode"
+          - "roleplay as"
+      - type: Language
+        enabled: true
+        valid_languages:
+          - en
+        threshold: 0.6
+      - type: Anonymize
+        enabled: true
+        hidden_names:
+          - CHIPOTLE_EMPLOYEE
+        entity_types:
+          - CREDIT_CARD
+          - US_SSN
+          - EMAIL_ADDRESS
+          - PHONE_NUMBER
+
+    output_scanners:
+      - type: NoRefusal
+        enabled: true
+        threshold: 0.7
+      - type: Regex
+        enabled: true
+        # Use double-escaped backslashes — YAML strips one layer.
+        patterns:
+          - "(?i)system\\s*prompt"
+          - "(?i)ignore\\s+(all|the|previous)\\s+instructions"
+          - "(?i)you\\s+are\\s+now"
+        is_blocked: true
+      - type: Sensitive
+        enabled: true
+        entity_types:
+          - CREDIT_CARD
+          - US_SSN
+          - EMAIL_ADDRESS
+          - PHONE_NUMBER
+        redact: true
+      - type: Bias
+        enabled: true
+        threshold: 0.8
+      - type: MaliciousURLs
+        enabled: true
+        threshold: 0.8
+
+    telemetry:
+      otel_endpoint: http://otel-collector.monitoring.svc.cluster.local:4317
+      emit_gen_ai_attributes: true

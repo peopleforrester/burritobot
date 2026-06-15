@@ -1,0 +1,117 @@
+# ABOUTME: LLM Guard scanner service — Deployment + Service in burritbot-net.
+# ABOUTME: ProtectAI llm-guard-api consumes /config/config.yaml; ships 4Gi+ of scanner models.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llm-guard
+  namespace: burritbot-net
+  labels:
+    app.kubernetes.io/name: llm-guard
+    app.kubernetes.io/part-of: burritbot
+    burritbot.io/layer: the-net
+    burritbot.io/guarded: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: llm-guard
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: llm-guard
+        app.kubernetes.io/part-of: burritbot
+        burritbot.io/layer: the-net
+        burritbot.io/guarded: "true"
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: llm-guard
+          # Pinned tag; bump deliberately, never use :latest.
+          image: laiyer/llm-guard-api:0.3.9
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8000
+          env:
+            - name: LLM_GUARD_CONFIG
+              value: /config/config.yaml
+            - name: APP_WORKERS
+              value: "1"
+            - name: LOG_LEVEL
+              value: INFO
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://otel-collector.monitoring.svc.cluster.local:4317
+            - name: OTEL_SERVICE_NAME
+              value: llm-guard
+          # First request may take 30-60s while scanner models lazy-load.
+          # readinessProbe waits up to ~3 min before reporting Ready.
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 18
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 500m
+              memory: 4Gi
+            limits:
+              cpu: 2000m
+              memory: 8Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: llm-guard-config
+              mountPath: /config/config.yaml
+              subPath: config.yaml
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+            - name: hf-cache
+              # transformers / sentence-transformers writes model weights here.
+              mountPath: /home/llm-guard/.cache/huggingface
+      volumes:
+        - name: llm-guard-config
+          configMap:
+            name: llm-guard-config
+        - name: tmp
+          emptyDir: {}
+        - name: hf-cache
+          emptyDir:
+            sizeLimit: 4Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: llm-guard
+  namespace: burritbot-net
+  labels:
+    app.kubernetes.io/name: llm-guard
+    app.kubernetes.io/part-of: burritbot
+    burritbot.io/layer: the-net
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: llm-guard
+  ports:
+    - name: http
+      port: 8000
+      targetPort: http
+      protocol: TCP
