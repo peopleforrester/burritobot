@@ -24,6 +24,12 @@ Usage: ${SCRIPT_NAME} [--yes]
 
 Options:
   --yes    Skip the interactive confirmation prompt (for CI scripts).
+           Requires CAST_NET_ALLOW_DESTROY=true as a second signal —
+           --yes alone still prompts. The two-key guard prevents a
+           stray CI invocation from destroying the cluster.
+
+Environment:
+  CAST_NET_ALLOW_DESTROY=true   Second key for --yes (see above).
 
 After completion, spot-check the GCP console for any lingering load
 balancers, disks, or forwarding rules that Terraform did not clean up.
@@ -96,7 +102,10 @@ main() {
     require_command terraform
     require_command kubectl
 
-    if [[ "${yes_flag}" != "true" ]]; then
+    # --yes alone is not enough — require CAST_NET_ALLOW_DESTROY=true as
+    # a second independent signal so a stray CI invocation cannot wipe
+    # the cluster. Without both keys, fall back to the interactive prompt.
+    if [[ "${yes_flag}" != "true" || "${CAST_NET_ALLOW_DESTROY:-}" != "true" ]]; then
         confirm "About to DESTROY the burritbot cluster and all GCP resources"
     fi
 
