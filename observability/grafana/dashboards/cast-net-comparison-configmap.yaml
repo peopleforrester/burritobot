@@ -1,0 +1,71 @@
+# ABOUTME: ConfigMap wrapping the cast-net-comparison.json dashboard for Grafana sidecar import.
+# ABOUTME: Phase B3 enables the kube-prometheus-stack Grafana sidecar with selector grafana_dashboard=1.
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-cast-net-comparison
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+    app.kubernetes.io/part-of: burritbot
+    burritbot.io/layer: the-eyes
+data:
+  cast-net-comparison.json: |
+    {
+      "title": "Cast the Net — Before / After Comparison",
+      "uid": "burritbot-cast-net-comparison",
+      "description": "Side-by-side view of Act 1 (net recalled, unguarded BurritBot) vs Act 2 (net cast, guarded BurritBot). Surfaces jailbreak success rate, off-topic rate, and latency delta for the live demo.",
+      "tags": ["burritbot", "cast-net", "the-net", "demo"],
+      "schemaVersion": 38,
+      "version": 1,
+      "refresh": "10s",
+      "time": {
+        "from": "now-15m",
+        "to": "now"
+      },
+      "panels": [
+        {
+          "id": 1,
+          "type": "stat",
+          "title": "Current traffic target",
+          "targets": [
+            {
+              "expr": "max(burritbot_cast_net_current_target)",
+              "refId": "A"
+            }
+          ],
+          "gridPos": {"h": 4, "w": 24, "x": 0, "y": 0}
+        },
+        {
+          "id": 2,
+          "type": "timeseries",
+          "title": "Jailbreak attempts blocked (guarded) vs leaked (unguarded)",
+          "targets": [
+            {
+              "expr": "sum(rate(burritbot_llm_guard_block_total[1m])) by (scanner)",
+              "refId": "A"
+            },
+            {
+              "expr": "sum(rate(burritbot_burritbot_unguarded_leak_total[1m]))",
+              "refId": "B"
+            }
+          ],
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4}
+        },
+        {
+          "id": 3,
+          "type": "timeseries",
+          "title": "p95 latency delta (guarded − unguarded)",
+          "targets": [
+            {
+              "expr": "(histogram_quantile(0.95, sum(rate(burritbot_burritbot_guarded_request_duration_seconds_bucket[1m])) by (le))) - (histogram_quantile(0.95, sum(rate(burritbot_burritbot_unguarded_request_duration_seconds_bucket[1m])) by (le)))",
+              "refId": "A"
+            }
+          ],
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4}
+        }
+      ],
+      "templating": {"list": []},
+      "annotations": {"list": []}
+    }

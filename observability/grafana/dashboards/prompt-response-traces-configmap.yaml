@@ -1,0 +1,57 @@
+# ABOUTME: ConfigMap wrapping the prompt-response-traces.json dashboard for Grafana sidecar import.
+# ABOUTME: Phase B3 enables the kube-prometheus-stack Grafana sidecar with selector grafana_dashboard=1.
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-prompt-response-traces
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+    app.kubernetes.io/part-of: burritbot
+    burritbot.io/layer: the-eyes
+data:
+  prompt-response-traces.json: |
+    {
+      "title": "BurritBot Prompt / Response Traces",
+      "uid": "burritbot-prompt-response-traces",
+      "description": "Trace table joining audience prompts to BurritBot responses with gen_ai.* attributes, latency, and guardrail verdicts.",
+      "tags": ["burritbot", "burritbot", "traces", "gen_ai"],
+      "schemaVersion": 38,
+      "version": 1,
+      "refresh": "30s",
+      "time": {
+        "from": "now-1h",
+        "to": "now"
+      },
+      "panels": [
+        {
+          "id": 1,
+          "type": "table",
+          "title": "Recent prompt/response spans",
+          "datasource": {"type": "tempo", "uid": "tempo"},
+          "targets": [
+            {
+              "queryType": "traceql",
+              "query": "{ name =~ \"burritbot.*chat\" }",
+              "refId": "A"
+            }
+          ],
+          "gridPos": {"h": 10, "w": 24, "x": 0, "y": 0}
+        },
+        {
+          "id": 2,
+          "type": "timeseries",
+          "title": "p95 latency by path (guarded vs unguarded)",
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum(rate(burritbot_burritbot_request_duration_seconds_bucket[5m])) by (le, guarded))",
+              "refId": "A"
+            }
+          ],
+          "gridPos": {"h": 8, "w": 24, "x": 0, "y": 10}
+        }
+      ],
+      "templating": {"list": []},
+      "annotations": {"list": []}
+    }
