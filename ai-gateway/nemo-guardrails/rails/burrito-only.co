@@ -1,4 +1,4 @@
-# ABOUTME: Colang 2.0 rail that constrains BurritBot to burrito-related topics only.
+# ABOUTME: Colang 1.0 rail that constrains BurritBot to burrito-related topics only.
 # ABOUTME: Anything off-topic is rewritten into a polite menu redirect.
 
 define user ask off topic
@@ -21,10 +21,10 @@ define user ask on topic
 define bot refuse off topic
   "I'm BurritBot — I can only help with the menu, hours, and locations. But if you want something seasonal, ask me about the carne asada bowl."
 
-flow burrito only input
+define flow burrito only input off topic
   user ask off topic
   bot refuse off topic
   abort
 
-flow burrito only input
+define flow burrito only input on topic
   user ask on topic

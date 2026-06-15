@@ -32,6 +32,7 @@ dev = [
     "google-cloud-storage>=2.18.0",
     "google-genai==1.71.0",
     "kubernetes>=35.0.0",
+    "nemoguardrails>=0.22.0",
     "opentelemetry-api==1.41.0",
     "opentelemetry-instrumentation-fastapi==0.62b0",
     "opentelemetry-sdk==1.41.0",

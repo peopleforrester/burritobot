@@ -1,4 +1,4 @@
-# ABOUTME: Colang 2.0 rail that detects prompt-injection / jailbreak attempts.
+# ABOUTME: Colang 1.0 rail that detects prompt-injection / jailbreak attempts.
 # ABOUTME: Works in tandem with LLM Guard PromptInjection — belt-and-braces.
 
 define user attempt jailbreak
@@ -15,7 +15,7 @@ define user attempt jailbreak
 define bot refuse jailbreak
   "I can't change who I am. I'm BurritBot, and I only answer burrito-related questions."
 
-flow jailbreak detect input
+define flow jailbreak detect input
   user attempt jailbreak
   bot refuse jailbreak
   abort

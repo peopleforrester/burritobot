@@ -1,4 +1,4 @@
-# ABOUTME: Colang 2.0 rail enforcing allowed topic categories beyond the burrito filter.
+# ABOUTME: Colang 1.0 rail enforcing allowed topic categories beyond the burrito filter.
 # ABOUTME: Blocks medical, legal, financial, and political advice categorically.
 
 define user ask for medical advice
@@ -24,22 +24,22 @@ define user ask about politics
 define bot refuse restricted topic
   "I can't help with that — I'm BurritBot and I only talk about the menu. Want to hear today's special?"
 
-flow topic enforcement input
+define flow topic enforcement input medical
   user ask for medical advice
   bot refuse restricted topic
   abort
 
-flow topic enforcement input
+define flow topic enforcement input legal
   user ask for legal advice
   bot refuse restricted topic
   abort
 
-flow topic enforcement input
+define flow topic enforcement input financial
   user ask for financial advice
   bot refuse restricted topic
   abort
 
-flow topic enforcement input
+define flow topic enforcement input politics
   user ask about politics
   bot refuse restricted topic
   abort

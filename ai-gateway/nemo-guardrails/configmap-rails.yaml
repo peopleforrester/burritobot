@@ -12,7 +12,7 @@ metadata:
     burritbot.io/layer: the-net
 data:
   burrito-only.co: |
-    # ABOUTME: Colang 2.0 rail that constrains BurritBot to burrito-related topics only.
+    # ABOUTME: Colang 1.0 rail that constrains BurritBot to burrito-related topics only.
     # ABOUTME: Anything off-topic is rewritten into a polite menu redirect.
 
     define user ask off topic
@@ -35,15 +35,15 @@ data:
     define bot refuse off topic
       "I'm BurritBot — I can only help with the menu, hours, and locations. But if you want something seasonal, ask me about the carne asada bowl."
 
-    flow burrito only input
+    define flow burrito only input off topic
       user ask off topic
       bot refuse off topic
       abort
 
-    flow burrito only input
+    define flow burrito only input on topic
       user ask on topic
   jailbreak-detect.co: |
-    # ABOUTME: Colang 2.0 rail that detects prompt-injection / jailbreak attempts.
+    # ABOUTME: Colang 1.0 rail that detects prompt-injection / jailbreak attempts.
     # ABOUTME: Works in tandem with LLM Guard PromptInjection — belt-and-braces.
 
     define user attempt jailbreak
@@ -60,12 +60,12 @@ data:
     define bot refuse jailbreak
       "I can't change who I am. I'm BurritBot, and I only answer burrito-related questions."
 
-    flow jailbreak detect input
+    define flow jailbreak detect input
       user attempt jailbreak
       bot refuse jailbreak
       abort
   output-sanitize.co: |
-    # ABOUTME: Colang 2.0 output rail that blocks unsafe model replies before they hit the audience.
+    # ABOUTME: Colang 1.0 output rail that blocks unsafe model replies before they hit the audience.
     # ABOUTME: Complements LLM Guard output scanners — NeMo handles intent, LLM Guard handles content.
 
     define bot attempt system prompt leak
@@ -82,17 +82,17 @@ data:
     define bot refuse to leak
       "I can't share that — here's what I can help with instead: the menu, hours, and locations."
 
-    flow output sanitize
+    define flow output sanitize system prompt
       bot attempt system prompt leak
       bot refuse to leak
       abort
 
-    flow output sanitize
+    define flow output sanitize instruction override
       bot attempt instruction override
       bot refuse to leak
       abort
   topic-enforcement.co: |
-    # ABOUTME: Colang 2.0 rail enforcing allowed topic categories beyond the burrito filter.
+    # ABOUTME: Colang 1.0 rail enforcing allowed topic categories beyond the burrito filter.
     # ABOUTME: Blocks medical, legal, financial, and political advice categorically.
 
     define user ask for medical advice
@@ -118,22 +118,22 @@ data:
     define bot refuse restricted topic
       "I can't help with that — I'm BurritBot and I only talk about the menu. Want to hear today's special?"
 
-    flow topic enforcement input
+    define flow topic enforcement input medical
       user ask for medical advice
       bot refuse restricted topic
       abort
 
-    flow topic enforcement input
+    define flow topic enforcement input legal
       user ask for legal advice
       bot refuse restricted topic
       abort
 
-    flow topic enforcement input
+    define flow topic enforcement input financial
       user ask for financial advice
       bot refuse restricted topic
       abort
 
-    flow topic enforcement input
+    define flow topic enforcement input politics
       user ask about politics
       bot refuse restricted topic
       abort
