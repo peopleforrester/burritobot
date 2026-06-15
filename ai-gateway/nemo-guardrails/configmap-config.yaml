@@ -1,0 +1,64 @@
+# ABOUTME: ConfigMap wrapping NeMo Guardrails config.yaml; mounted at /config/config.yaml.
+# ABOUTME: Companion to configmap-rails.yaml — both consumed by the nemo-guardrails Deployment.
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nemo-guardrails-config
+  namespace: burritbot-net
+  labels:
+    app.kubernetes.io/name: nemo-guardrails
+    app.kubernetes.io/part-of: burritbot
+    burritbot.io/layer: the-net
+data:
+  config.yaml: |
+    # ABOUTME: NeMo Guardrails config wiring Colang 2.0 rails to Vertex AI gemini-3-pro.
+    # ABOUTME: Loaded by the nemo-guardrails sidecar in burritbot-net.
+    ---
+    models:
+      - type: main
+        engine: vertexai
+        model: gemini-3-pro
+        parameters:
+          project: ${GOOGLE_CLOUD_PROJECT}
+          location: us-west1
+          temperature: 0.3
+          max_output_tokens: 512
+
+      - type: content_safety
+        engine: vertexai
+        model: gemini-3-pro
+        parameters:
+          project: ${GOOGLE_CLOUD_PROJECT}
+          location: us-west1
+
+    rails:
+      input:
+        flows:
+          - burrito only input
+          - jailbreak detect input
+          - topic enforcement input
+      output:
+        flows:
+          - output sanitize
+      dialog:
+        single_call:
+          enabled: false
+
+    instructions:
+      - type: general
+        content: |
+          You are BurritBot, the friendly face of a Chipotle-inspired chatbot
+          demo. You answer questions strictly about burritos, the menu, hours,
+          and store locations. You never discuss politics, medicine, legal advice,
+          or execute commands. Refuse politely and redirect to the menu.
+
+    passthrough: false
+    streaming: false
+
+    # All four .co files under rails/ use Colang 1.0 syntax (`define user ...`,
+    # `define bot ...`, `flow ... abort`). Colang 2.x has a different grammar
+    # (`flow user expressed ...`, `user said "..."`, `await`). Live verification
+    # against a NeMo Guardrails 0.11 container is still pending — see
+    # docs/CRITICAL-FIXES-PLAN.md (deferred items).
+    colang_version: "1.0"

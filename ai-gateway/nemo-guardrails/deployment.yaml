@@ -1,0 +1,123 @@
+# ABOUTME: NeMo Guardrails microservice — Deployment + Service in burritbot-net.
+# ABOUTME: Consumes config.yaml + rails/ via two ConfigMaps mounted under /config/.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nemo-guardrails
+  namespace: burritbot-net
+  labels:
+    app.kubernetes.io/name: nemo-guardrails
+    app.kubernetes.io/part-of: burritbot
+    burritbot.io/layer: the-net
+    burritbot.io/guarded: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: nemo-guardrails
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: nemo-guardrails
+        app.kubernetes.io/part-of: burritbot
+        burritbot.io/layer: the-net
+        burritbot.io/guarded: "true"
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        seccompProfile:
+          type: RuntimeDefault
+      # NGC images require a pull secret created from your NGC API key:
+      #   kubectl create secret docker-registry nvidia-ngc-secret \
+      #     --docker-server=nvcr.io --docker-username='$oauthtoken' \
+      #     --docker-password=$NGC_API_KEY -n burritbot-net
+      imagePullSecrets:
+        - name: nvidia-ngc-secret
+      containers:
+        - name: nemo-guardrails
+          image: nvcr.io/nvidia/nemo-microservices/guardrails:25.07
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8000
+          env:
+            - name: NEMO_GUARDRAILS_CONFIG_PATH
+              value: /config
+            - name: GOOGLE_CLOUD_PROJECT
+              value: REPLACE_WITH_PROJECT
+            - name: GOOGLE_CLOUD_LOCATION
+              value: us-west1
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://otel-collector.monitoring.svc.cluster.local:4317
+            - name: OTEL_SERVICE_NAME
+              value: nemo-guardrails
+          readinessProbe:
+            httpGet:
+              path: /v1/rails/configs
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /v1/rails/configs
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 250m
+              memory: 1Gi
+            limits:
+              cpu: 1000m
+              memory: 2Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: nemo-config
+              mountPath: /config/config.yaml
+              subPath: config.yaml
+              readOnly: true
+            - name: nemo-rails
+              mountPath: /config/rails
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+            - name: cache
+              mountPath: /home/nemo/.cache
+      volumes:
+        - name: nemo-config
+          configMap:
+            name: nemo-guardrails-config
+        - name: nemo-rails
+          configMap:
+            name: nemo-guardrails-rails
+        - name: tmp
+          emptyDir: {}
+        - name: cache
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nemo-guardrails
+  namespace: burritbot-net
+  labels:
+    app.kubernetes.io/name: nemo-guardrails
+    app.kubernetes.io/part-of: burritbot
+    burritbot.io/layer: the-net
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: nemo-guardrails
+  ports:
+    - name: http
+      port: 8000
+      targetPort: http
+      protocol: TCP
