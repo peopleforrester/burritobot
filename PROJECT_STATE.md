@@ -110,12 +110,19 @@ commit.
 6. **Licensing:** Apache 2.0 (matching kubeauto-ai-day lineage).
 
 ## Local Tooling
-- Installed: `yamllint`, `jq`, `kyverno`, `shellcheck`, `uv`, `python3.13`
-- Missing: `terraform`, `kubectl`, `kubeconform`, `helm`, `docker`
+- Installed: `yamllint`, `jq`, `kyverno`, `shellcheck`, `uv`, `python3.13`,
+  `terraform`, `kubectl`, `helm`, `gcloud`
+- Still missing: `kubeconform`, `docker`
+- gcloud accounts authenticated: `michael@kodekloud.com` (active, intended
+  GCP identity), `michaelrishiforrester@gmail.com` (personal, do not use)
+- ADC for the Terraform google provider: not yet set up — run
+  `gcloud auth application-default login` before the first
+  `terraform init`.
 
 Offline TDD strategy: Python code via pytest; Kyverno via `kyverno test`;
-YAML via yamllint; JSON dashboards via `jq empty`; shell via shellcheck;
-Terraform `validate` deferred to a session with Terraform installed.
+YAML via yamllint; JSON dashboards via `jq empty`; shell via shellcheck.
+Terraform `init`/`validate`/`plan` are now runnable locally; `apply`
+remains a deliberate operator step.
 
 ## Known Gaps (deferred — not blocking the critical-fix series)
 

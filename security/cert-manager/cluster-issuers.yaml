@@ -11,7 +11,7 @@ metadata:
 spec:
   acme:
     server: https://acme-staging-v02.api.letsencrypt.org/directory
-    email: REPLACE_WITH_OPERATOR_EMAIL
+    email: michael@kodekloud.com
     privateKeySecretRef:
       name: letsencrypt-staging-key
     solvers:
@@ -29,7 +29,7 @@ metadata:
 spec:
   acme:
     server: https://acme-v02.api.letsencrypt.org/directory
-    email: REPLACE_WITH_OPERATOR_EMAIL
+    email: michael@kodekloud.com
     privateKeySecretRef:
       name: letsencrypt-production-key
     solvers:
