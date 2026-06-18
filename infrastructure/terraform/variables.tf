@@ -60,6 +60,12 @@ variable "workload_service_account_id" {
   default     = "burritbot-workload"
 }
 
+variable "eso_controller_service_account_id" {
+  description = "Account ID of the WIF-bound External Secrets Operator controller GSA."
+  type        = string
+  default     = "eso-controller"
+}
+
 variable "vertex_secret_id" {
   description = "Secret Manager secret ID holding any Vertex AI quota metadata."
   type        = string

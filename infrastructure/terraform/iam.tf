@@ -54,3 +54,24 @@ resource "google_service_account_iam_member" "workload_wif_binding" {
   role               = "roles/iam.workloadIdentityUser"
   member             = "serviceAccount:${var.project_id}.svc.id.goog[burritbot-guarded/burritbot]"
 }
+
+# External Secrets Operator controller service account: WIF-bound to the
+# external-secrets KSA in the external-secrets namespace so the controller
+# can read GCP Secret Manager values through the ClusterSecretStore.
+resource "google_service_account" "eso_controller" {
+  account_id   = var.eso_controller_service_account_id
+  display_name = "External Secrets Operator controller (WIF)"
+  description  = "Federated to the external-secrets/external-secrets KSA. No JSON key."
+}
+
+resource "google_project_iam_member" "eso_controller_secret_accessor" {
+  project = var.project_id
+  role    = "roles/secretmanager.secretAccessor"
+  member  = "serviceAccount:${google_service_account.eso_controller.email}"
+}
+
+resource "google_service_account_iam_member" "eso_controller_wif_binding" {
+  service_account_id = google_service_account.eso_controller.name
+  role               = "roles/iam.workloadIdentityUser"
+  member             = "serviceAccount:${var.project_id}.svc.id.goog[external-secrets/external-secrets]"
+}
