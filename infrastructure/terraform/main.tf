@@ -21,7 +21,7 @@ terraform {
   # lifecycle protection and survive a Terraform-managed teardown of the
   # rest of the project.
   backend "gcs" {
-    bucket = "REPLACE_WITH_TFSTATE_BUCKET"
+    bucket = "kk-community-projects-burritbot-tfstate"
     prefix = "burritbot/terraform/state"
   }
 }
