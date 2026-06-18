@@ -35,7 +35,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: burritbot
-          image: us-west1-docker.pkg.dev/REPLACE_WITH_PROJECT/burritbot/burritbot:0.1.0
+          image: us-west1-docker.pkg.dev/kk-community-projects/burritbot/burritbot:0.1.0
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
@@ -44,7 +44,7 @@ spec:
             - name: MODEL_NAME
               value: gemini-3-pro
             - name: GOOGLE_CLOUD_PROJECT
-              value: REPLACE_WITH_PROJECT
+              value: kk-community-projects
             - name: GOOGLE_CLOUD_LOCATION
               value: us-west1
             - name: BURRITBOT_GUARDED

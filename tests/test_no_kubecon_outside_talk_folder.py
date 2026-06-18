@@ -40,6 +40,10 @@ SKIP_DIRS = {
     ".pytest_cache",
     "node_modules",
     "presentations",  # the entire presentations/ subtree is allowed to mention kubecon
+    # claude-ai-context/ is a gitignored, local-only archive of imported
+    # claude.ai conversations — it never ships to the public repo and is
+    # not part of the platform surface this test is meant to police.
+    "claude-ai-context",
 }
 
 # Files that are allowed to mention kubecon in their content (full path

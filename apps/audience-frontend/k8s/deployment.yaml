@@ -32,7 +32,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: audience-frontend
-          image: us-west1-docker.pkg.dev/REPLACE_WITH_PROJECT/burritbot/audience-frontend:0.1.0
+          image: us-west1-docker.pkg.dev/kk-community-projects/burritbot/audience-frontend:0.1.0
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
