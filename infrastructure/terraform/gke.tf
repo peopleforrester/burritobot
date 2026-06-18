@@ -5,10 +5,12 @@ resource "google_container_cluster" "burritbot" {
   name     = var.cluster_name
   location = var.region
 
-  # GKE Standard: do NOT enable Autopilot. Falco DaemonSet needs privileged
-  # containers, which Autopilot forbids. This is the non-negotiable decision
-  # from the burritbot spec.
-  enable_autopilot = false
+  # GKE Standard: Autopilot is intentionally NOT enabled. Falco DaemonSet
+  # needs privileged containers, which Autopilot forbids. The
+  # `enable_autopilot` field is deliberately omitted — google provider v7
+  # treats any presence of that field (even `= false`) as Autopilot-aware
+  # and flags conflicts with network_policy / remove_default_node_pool /
+  # addons_config.network_policy_config. Standard is the default.
 
   network    = google_compute_network.burritbot.id
   subnetwork = google_compute_subnetwork.burritbot.id
