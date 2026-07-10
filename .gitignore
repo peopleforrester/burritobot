@@ -75,3 +75,6 @@ claude_output/
 # Imported context archive from claude.ai migration — local Claude Code context only, never publish (public repo).
 claude-ai-context/
 tfplan
+
+# Conversation transcripts stay local — never in the repo (routed by MRF pipeline)
+transcripts/
