@@ -1,4 +1,4 @@
-# burritbot — A Reusable AI-Guardrails Demo Platform for Kubernetes
+# burritbot — A Reusable Kubernetes Platform for Agentic Covenants
 
 burritbot is a self-contained Kubernetes platform that runs the *same*
 chatbot two ways at once — completely unguarded in one namespace, and
